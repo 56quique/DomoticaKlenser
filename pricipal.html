@@ -54,21 +54,20 @@
       width: 52px;
       height: 52px;
       border-radius: 50%;
-      background: #1a0000;
-      border: 2px solid #ef4444;
-      color: #ef4444;
-      font-size: 1.4rem;
+      background: #ef4444;
+      border: none;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 0 16px #ef444433;
-      transition: box-shadow 0.2s, background 0.2s;
+      box-shadow: 0 0 20px #ef444466, 0 0 40px #ef444422;
+      transition: box-shadow 0.2s, transform 0.1s, background 0.2s;
       -webkit-tap-highlight-color: transparent;
     }
     .btn-panico:active {
-      background: #3a0000;
-      box-shadow: 0 0 30px #ef4444aa;
+      background: #dc2626;
+      box-shadow: 0 0 40px #ef4444cc;
+      transform: scale(0.94);
     }
 
     /* ── Estado del asistente ── */
@@ -216,25 +215,27 @@
     }
     .btn-menu:active { box-shadow: 0 0 20px #38bdf855; }
 
-    /* Botón micrófono principal */
+    /* Botón micrófono principal — estilo WhatsApp audio */
     .btn-mic {
       width: 76px; height: 76px;
       border-radius: 50%;
-      background: #0a1a0e;
-      border: 2px solid #4ade80;
-      color: #4ade80;
+      background: #22c55e;
+      border: none;
+      color: #fff;
       font-size: 1.8rem;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 0 20px #4ade8044;
-      transition: box-shadow 0.2s, background 0.2s;
+      box-shadow: 0 0 24px #22c55e66;
+      transition: box-shadow 0.15s, transform 0.15s, background 0.15s;
       -webkit-tap-highlight-color: transparent;
+      touch-action: none; /* necesario para mantener presionado en móvil */
     }
-    .btn-mic:active, .btn-mic.activo {
-      background: #0a2e14;
-      box-shadow: 0 0 40px #4ade8099;
+    .btn-mic.activo {
+      background: #16a34a;
+      box-shadow: 0 0 50px #22c55ecc, 0 0 100px #22c55e44;
+      transform: scale(1.08);
     }
 
     /* Botón configuración (solo visible para admin, por ahora oculto) */
@@ -331,7 +332,7 @@
       <span class="logo-nucleo">NÚCLEO</span>
       <span class="logo-home">home</span>
     </div>
-    <button class="btn-panico" onclick="mostrarPanico()" title="Emergencia">🚨</button>
+    <button class="btn-panico" onclick="mostrarPanico()" title="Emergencia"></button>
   </div>
 
   <!-- Estado del asistente -->
@@ -352,14 +353,26 @@
   <!-- Controles -->
   <div class="controles">
     <button class="btn-menu" onclick="irAmbientes()" title="Ambientes">⊞</button>
-    <button class="btn-mic" id="btnMic" onclick="activarVoz()" title="Hablar">🎤</button>
+    <button class="btn-mic" id="btnMic"
+      onmousedown="iniciarVoz()"
+      onmouseup="detenerVoz()"
+      ontouchstart="iniciarVoz(event)"
+      ontouchend="detenerVoz()"
+      title="Mantené presionado para hablar">
+      <svg xmlns="http://www.w3.org/2000/svg" height="32" width="32" viewBox="0 0 24 24" fill="white">
+        <rect x="9" y="2" width="6" height="11" rx="3"/>
+        <path d="M5 11a7 7 0 0 0 14 0" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <line x1="12" y1="18" x2="12" y2="22" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        <line x1="8" y1="22" x2="16" y2="22" stroke="white" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
     <button class="btn-config" onclick="irConfig()" title="Configuración">⚙️</button>
   </div>
 
   <!-- Modal de pánico -->
   <div class="modal-overlay" id="modalPanico">
     <div class="modal">
-      <h2>🚨 EMERGENCIA</h2>
+      <h2>EMERGENCIA</h2>
       <p>Se enviará una alerta por WhatsApp y se activará la alarma.</p>
       <div class="modal-btns">
         <button class="btn-confirmar" onclick="confirmarPanico()">ENVIAR</button>
@@ -407,14 +420,21 @@
       };
     }
 
-    // ── ACTIVAR VOZ ────────────────────────────────────────────────
-    function activarVoz() {
+    // ── MANTENER PRESIONADO PARA HABLAR (estilo WhatsApp) ─────────
+    function iniciarVoz(e) {
+      // Evita el scroll en móvil mientras se mantiene presionado
+      if (e) e.preventDefault();
       if (!reconocimiento) {
         mostrarGlobo('Tu navegador no soporta reconocimiento de voz.');
         return;
       }
       document.getElementById('btnMic').classList.add('activo');
-      reconocimiento.start();
+      try { reconocimiento.start(); } catch(err) {}
+    }
+
+    function detenerVoz() {
+      document.getElementById('btnMic').classList.remove('activo');
+      try { reconocimiento.stop(); } catch(err) {}
     }
 
     // ── PROCESAR COMANDO ───────────────────────────────────────────
@@ -526,4 +546,3 @@
 
 </body>
 </html>
-
