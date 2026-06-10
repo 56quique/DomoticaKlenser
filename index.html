@@ -1,1 +1,308 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NÚCLEO Home</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;600&family=Dancing+Script:wght@700&display=swap" rel="stylesheet"/>
+  <style>
+    /* ── Reset y base ── */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
+    body {
+      background: #000;
+      color: #fff;
+      font-family: 'Rajdhani', sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 40px 20px 50px;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* ── Logo ── */
+    .logo {
+      text-align: center;
+      letter-spacing: 2px;
+    }
+    .logo-nucleo {
+      font-size: 2.8rem;
+      font-weight: 600;
+      color: #ffffff;
+      text-transform: uppercase;
+      letter-spacing: 6px;
+    }
+    .logo-home {
+      font-family: 'Dancing Script', cursive;
+      font-size: 2rem;
+      color: #38bdf8;
+      margin-left: 8px;
+    }
+    .logo-line {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(to right, transparent, #38bdf8, transparent);
+      margin-top: 10px;
+    }
+
+    /* ── Reloj y fecha ── */
+    .datetime {
+      text-align: center;
+    }
+    .clock {
+      font-size: 4.5rem;
+      font-weight: 300;
+      letter-spacing: 4px;
+      color: #f0f0f0;
+      line-height: 1;
+    }
+    .date {
+      font-size: 1rem;
+      color: #aaa;
+      margin-top: 6px;
+      letter-spacing: 1px;
+    }
+
+    /* ── Clima ── */
+    .weather {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 14px;
+      justify-content: center;
+    }
+    .weather img {
+      width: 36px;
+      height: 36px;
+    }
+    .weather-temp {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #fff;
+    }
+    .weather-divider {
+      color: #555;
+      font-size: 1.2rem;
+    }
+    .weather-desc {
+      font-size: 1rem;
+      color: #aaa;
+      text-transform: capitalize;
+    }
+
+    /* ── Círculo de voz ── */
+    .circle-wrapper {
+      position: relative;
+      width: 260px;
+      height: 260px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Anillo exterior giratorio */
+    .ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      animation: spin 6s linear infinite;
+    }
+    .ring-1 {
+      width: 260px; height: 260px;
+      border-top-color: #38bdf8;
+      border-right-color: #38bdf855;
+      animation-duration: 6s;
+    }
+    .ring-2 {
+      width: 230px; height: 230px;
+      border-bottom-color: #22d3ee;
+      border-left-color: #22d3ee44;
+      animation-duration: 9s;
+      animation-direction: reverse;
+    }
+    .ring-3 {
+      width: 200px; height: 200px;
+      border-top-color: #4ade80;
+      border-right-color: #4ade8033;
+      animation-duration: 12s;
+    }
+
+    /* Brillo central */
+    .circle-glow {
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      background: radial-gradient(circle at center, #0e4a6e55 0%, transparent 70%);
+      box-shadow:
+        0 0 40px #38bdf866,
+        0 0 80px #22d3ee33,
+        inset 0 0 30px #38bdf822;
+      animation: pulse 3s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 40px #38bdf866, 0 0 80px #22d3ee33; }
+      50%       { box-shadow: 0 0 60px #38bdf8aa, 0 0 120px #22d3ee55; }
+    }
+
+    /* Reflejo en el suelo */
+    .circle-shadow {
+      position: absolute;
+      bottom: -20px;
+      width: 140px;
+      height: 20px;
+      background: radial-gradient(ellipse, #38bdf844 0%, transparent 70%);
+      border-radius: 50%;
+    }
+
+    /* ── Botón COMENZAR ── */
+    .btn-start {
+      width: 100%;
+      max-width: 320px;
+      padding: 18px 0;
+      border: 2px solid #4ade80;
+      border-radius: 50px;
+      background: #0a1a0e88;
+      color: #fff;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 600;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      transition: background 0.3s, box-shadow 0.3s;
+      box-shadow: 0 0 20px #4ade8033;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-start:active {
+      background: #0a2e1488;
+      box-shadow: 0 0 40px #4ade8066;
+    }
+    .btn-arrow {
+      font-size: 1.2rem;
+      color: #4ade80;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Logo -->
+  <div class="logo">
+    <div>
+      <span class="logo-nucleo">NÚCLEO</span><span class="logo-home">home</span>
+    </div>
+    <div class="logo-line"></div>
+  </div>
+
+  <!-- Reloj, fecha y clima -->
+  <div class="datetime">
+    <div class="clock" id="clock">00:00</div>
+    <div class="date" id="date">Cargando fecha...</div>
+    <div class="weather" id="weather">
+      <span style="color:#555; font-size:0.9rem;">Obteniendo clima...</span>
+    </div>
+  </div>
+
+  <!-- Círculo animado -->
+  <div class="circle-wrapper">
+    <div class="ring ring-1"></div>
+    <div class="ring ring-2"></div>
+    <div class="ring ring-3"></div>
+    <div class="circle-glow"></div>
+    <div class="circle-shadow"></div>
+  </div>
+
+  <!-- Botón comenzar -->
+  <button class="btn-start" onclick="comenzar()">
+    COMENZAR
+    <span class="btn-arrow">›</span>
+  </button>
+
+  <script>
+    // ── CONFIGURACIÓN ──────────────────────────────────────────────
+    // Pegá tu API key de OpenWeatherMap aquí abajo entre las comillas
+    const API_KEY = '7f459ea71753f5cb8c9acbae9eee1de3';
+    const CIUDAD  = 'Jardín América';
+    const PAIS    = 'AR';
+    // ──────────────────────────────────────────────────────────────
+
+    // Actualiza el reloj cada segundo
+    function actualizarReloj() {
+      const ahora = new Date();
+
+      // Hora en formato HH:MM
+      const horas   = String(ahora.getHours()).padStart(2, '0');
+      const minutos = String(ahora.getMinutes()).padStart(2, '0');
+      document.getElementById('clock').textContent = `${horas}:${minutos}`;
+
+      // Fecha en español
+      const opciones = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+      const fechaStr = ahora.toLocaleDateString('es-AR', opciones);
+      // Primera letra en mayúscula
+      document.getElementById('date').textContent =
+        fechaStr.charAt(0).toUpperCase() + fechaStr.slice(1);
+    }
+
+    // Llama al reloj inmediatamente y luego cada segundo
+    actualizarReloj();
+    setInterval(actualizarReloj, 1000);
+
+    // Obtiene el clima de OpenWeatherMap
+    async function obtenerClima() {
+      // Si aún no pusiste la API key, muestra un mensaje y no hace el fetch
+      if (API_KEY === 'TU_API_KEY_AQUI') {
+        document.getElementById('weather').innerHTML =
+          '<span style="color:#555; font-size:0.85rem;">Agregá tu API key para ver el clima</span>';
+        return;
+      }
+
+      try {
+        const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(CIUDAD)},${PAIS}&appid=${API_KEY}&units=metric&lang=es`;
+        const respuesta = await fetch(url);
+        const datos     = await respuesta.json();
+
+        if (datos.cod !== 200) throw new Error('Ciudad no encontrada');
+
+        const temp    = Math.round(datos.main.temp);           // temperatura entera
+        const desc    = datos.weather[0].description;          // descripción en español
+        const icono   = datos.weather[0].icon;                 // código del ícono
+        const iconUrl = `https://openweathermap.org/img/wn/${icono}.png`;
+
+        // Arma el HTML del clima
+        document.getElementById('weather').innerHTML = `
+          <img src="${iconUrl}" alt="${desc}" />
+          <span class="weather-temp">${temp}°C</span>
+          <span class="weather-divider">|</span>
+          <span class="weather-desc">${desc}</span>
+        `;
+      } catch (error) {
+        // Si falla, muestra un mensaje discreto
+        document.getElementById('weather').innerHTML =
+          '<span style="color:#555; font-size:0.85rem;">Clima no disponible</span>';
+      }
+    }
+
+    // Obtiene el clima al cargar y luego cada 10 minutos
+    obtenerClima();
+    setInterval(obtenerClima, 10 * 60 * 1000);
+
+    // Acción del botón COMENZAR (por ahora solo un log, luego navega a la pantalla principal)
+    function comenzar() {
+      // Aquí irá la navegación a la pantalla principal
+      alert('¡Bienvenido a NÚCLEO Home!');
+    }
+  </script>
+
+</body>
+</html>
