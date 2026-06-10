@@ -1,1 +1,529 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NÚCLEO Home</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;600&family=Dancing+Script:wght@700&display=swap" rel="stylesheet"/>
+  <style>
+    /* ── Reset y base ── */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #000;
+      color: #fff;
+      font-family: 'Rajdhani', sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 30px 20px 40px;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* ── Cabecera ── */
+    .header {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+    .logo-nucleo {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
+    .logo-home {
+      font-family: 'Dancing Script', cursive;
+      font-size: 1.1rem;
+      color: #38bdf8;
+    }
+
+    /* Botón pánico */
+    .btn-panico {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: #1a0000;
+      border: 2px solid #ef4444;
+      color: #ef4444;
+      font-size: 1.4rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 16px #ef444433;
+      transition: box-shadow 0.2s, background 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-panico:active {
+      background: #3a0000;
+      box-shadow: 0 0 30px #ef4444aa;
+    }
+
+    /* ── Estado del asistente ── */
+    .estado {
+      font-size: 0.85rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #555;
+      transition: color 0.4s;
+    }
+    .estado.escuchando { color: #4ade80; }
+    .estado.respondiendo { color: #a78bfa; }
+
+    /* ── Círculo de voz ── */
+    .circle-wrapper {
+      position: relative;
+      width: 260px;
+      height: 260px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      transition: border-color 0.5s;
+    }
+
+    /* Estado: esperando — azul */
+    .ring-1 {
+      width: 260px; height: 260px;
+      border-top-color: #38bdf8;
+      border-right-color: #38bdf855;
+      animation: spin 6s linear infinite;
+    }
+    .ring-2 {
+      width: 230px; height: 230px;
+      border-bottom-color: #22d3ee;
+      border-left-color: #22d3ee44;
+      animation: spin 9s linear infinite reverse;
+    }
+    .ring-3 {
+      width: 200px; height: 200px;
+      border-top-color: #38bdf855;
+      border-right-color: #38bdf822;
+      animation: spin 12s linear infinite;
+    }
+
+    /* Estado: escuchando — verde */
+    body.escuchando .ring-1 { border-top-color: #4ade80; border-right-color: #4ade8055; }
+    body.escuchando .ring-2 { border-bottom-color: #22c55e; border-left-color: #22c55e44; }
+    body.escuchando .ring-3 { border-top-color: #4ade8055; border-right-color: #4ade8022; }
+    body.escuchando .circle-glow {
+      box-shadow: 0 0 60px #4ade80aa, 0 0 120px #22c55e55;
+      animation: pulse-verde 1s ease-in-out infinite;
+    }
+
+    /* Estado: respondiendo — violeta */
+    body.respondiendo .ring-1 { border-top-color: #a78bfa; border-right-color: #a78bfa55; }
+    body.respondiendo .ring-2 { border-bottom-color: #8b5cf6; border-left-color: #8b5cf644; }
+    body.respondiendo .ring-3 { border-top-color: #a78bfa55; border-right-color: #a78bfa22; }
+    body.respondiendo .circle-glow {
+      box-shadow: 0 0 60px #a78bfaaa, 0 0 120px #8b5cf655;
+      animation: pulse-violeta 0.6s ease-in-out infinite;
+    }
+
+    .circle-glow {
+      width: 160px; height: 160px;
+      border-radius: 50%;
+      background: radial-gradient(circle at center, #0e4a6e55 0%, transparent 70%);
+      box-shadow: 0 0 40px #38bdf866, 0 0 80px #22d3ee33;
+      animation: pulse-azul 3s ease-in-out infinite;
+      transition: box-shadow 0.5s;
+    }
+
+    .circle-shadow {
+      position: absolute;
+      bottom: -20px;
+      width: 140px; height: 20px;
+      background: radial-gradient(ellipse, #38bdf844 0%, transparent 70%);
+      border-radius: 50%;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+    @keyframes pulse-azul {
+      0%, 100% { box-shadow: 0 0 40px #38bdf866, 0 0 80px #22d3ee33; }
+      50%       { box-shadow: 0 0 60px #38bdf8aa, 0 0 120px #22d3ee55; }
+    }
+    @keyframes pulse-verde {
+      0%, 100% { box-shadow: 0 0 50px #4ade8088, 0 0 100px #22c55e44; }
+      50%       { box-shadow: 0 0 80px #4ade80cc, 0 0 150px #22c55e77; }
+    }
+    @keyframes pulse-violeta {
+      0%, 100% { box-shadow: 0 0 50px #a78bfa88, 0 0 100px #8b5cf644; }
+      50%       { box-shadow: 0 0 80px #a78bfacc, 0 0 150px #8b5cf677; }
+    }
+
+    /* ── Globo de respuesta ── */
+    .globo {
+      background: #0f172a;
+      border: 1px solid #1e3a5f;
+      border-radius: 18px 18px 18px 4px;
+      padding: 14px 18px;
+      max-width: 300px;
+      font-size: 1rem;
+      color: #e2e8f0;
+      line-height: 1.5;
+      min-height: 54px;
+      display: flex;
+      align-items: center;
+      opacity: 0;
+      transition: opacity 0.4s;
+      text-align: left;
+    }
+    .globo.visible { opacity: 1; }
+
+    /* ── Controles inferiores ── */
+    .controles {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 320px;
+    }
+
+    /* Botón menú táctil */
+    .btn-menu {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      background: #0a1a2e;
+      border: 2px solid #1e3a5f;
+      color: #38bdf8;
+      font-size: 1.3rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: box-shadow 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-menu:active { box-shadow: 0 0 20px #38bdf855; }
+
+    /* Botón micrófono principal */
+    .btn-mic {
+      width: 76px; height: 76px;
+      border-radius: 50%;
+      background: #0a1a0e;
+      border: 2px solid #4ade80;
+      color: #4ade80;
+      font-size: 1.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px #4ade8044;
+      transition: box-shadow 0.2s, background 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-mic:active, .btn-mic.activo {
+      background: #0a2e14;
+      box-shadow: 0 0 40px #4ade8099;
+    }
+
+    /* Botón configuración (solo visible para admin, por ahora oculto) */
+    .btn-config {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      background: #0a1a2e;
+      border: 2px solid #1e3a5f;
+      color: #38bdf8;
+      font-size: 1.3rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: box-shadow 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-config:active { box-shadow: 0 0 20px #38bdf855; }
+
+    /* ── Modal de pánico ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: #000000cc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    .modal-overlay.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .modal {
+      background: #1a0000;
+      border: 2px solid #ef4444;
+      border-radius: 20px;
+      padding: 30px 24px;
+      text-align: center;
+      max-width: 280px;
+      box-shadow: 0 0 60px #ef444466;
+    }
+    .modal h2 {
+      font-size: 1.4rem;
+      color: #ef4444;
+      letter-spacing: 2px;
+      margin-bottom: 10px;
+    }
+    .modal p {
+      font-size: 0.95rem;
+      color: #aaa;
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+    .modal-btns {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+    .btn-confirmar {
+      padding: 12px 24px;
+      background: #ef4444;
+      border: none;
+      border-radius: 50px;
+      color: #fff;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 2px;
+      cursor: pointer;
+    }
+    .btn-cancelar {
+      padding: 12px 24px;
+      background: transparent;
+      border: 2px solid #555;
+      border-radius: 50px;
+      color: #aaa;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 2px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Cabecera -->
+  <div class="header">
+    <div class="logo">
+      <span class="logo-nucleo">NÚCLEO</span>
+      <span class="logo-home">home</span>
+    </div>
+    <button class="btn-panico" onclick="mostrarPanico()" title="Emergencia">🚨</button>
+  </div>
+
+  <!-- Estado del asistente -->
+  <div class="estado" id="estado">Esperando...</div>
+
+  <!-- Círculo animado -->
+  <div class="circle-wrapper">
+    <div class="ring ring-1"></div>
+    <div class="ring ring-2"></div>
+    <div class="ring ring-3"></div>
+    <div class="circle-glow"></div>
+    <div class="circle-shadow"></div>
+  </div>
+
+  <!-- Globo de respuesta -->
+  <div class="globo" id="globo"></div>
+
+  <!-- Controles -->
+  <div class="controles">
+    <button class="btn-menu" onclick="irAmbientes()" title="Ambientes">⊞</button>
+    <button class="btn-mic" id="btnMic" onclick="activarVoz()" title="Hablar">🎤</button>
+    <button class="btn-config" onclick="irConfig()" title="Configuración">⚙️</button>
+  </div>
+
+  <!-- Modal de pánico -->
+  <div class="modal-overlay" id="modalPanico">
+    <div class="modal">
+      <h2>🚨 EMERGENCIA</h2>
+      <p>Se enviará una alerta por WhatsApp y se activará la alarma.</p>
+      <div class="modal-btns">
+        <button class="btn-confirmar" onclick="confirmarPanico()">ENVIAR</button>
+        <button class="btn-cancelar" onclick="cerrarPanico()">CANCELAR</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── RECONOCIMIENTO DE VOZ ──────────────────────────────────────
+    // Verifica si el navegador soporta la Web Speech API
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let reconocimiento = null;
+
+    if (SpeechRecognition) {
+      reconocimiento = new SpeechRecognition();
+      reconocimiento.lang = 'es-AR';        // Español Argentina
+      reconocimiento.continuous = false;     // Escucha una frase y para
+      reconocimiento.interimResults = false; // Solo resultado final
+
+      // Cuando empieza a escuchar
+      reconocimiento.onstart = () => {
+        setEstado('escuchando');
+      };
+
+      // Cuando obtiene el texto hablado
+      reconocimiento.onresult = (evento) => {
+        const textoEscuchado = evento.results[0][0].transcript;
+        procesarComando(textoEscuchado);
+      };
+
+      // Cuando termina de escuchar (sin resultado)
+      reconocimiento.onend = () => {
+        if (document.body.classList.contains('escuchando')) {
+          setEstado('esperando');
+        }
+        document.getElementById('btnMic').classList.remove('activo');
+      };
+
+      // Si hay error
+      reconocimiento.onerror = () => {
+        setEstado('esperando');
+        mostrarGlobo('No pude escucharte. Intentá de nuevo.');
+        document.getElementById('btnMic').classList.remove('activo');
+      };
+    }
+
+    // ── ACTIVAR VOZ ────────────────────────────────────────────────
+    function activarVoz() {
+      if (!reconocimiento) {
+        mostrarGlobo('Tu navegador no soporta reconocimiento de voz.');
+        return;
+      }
+      document.getElementById('btnMic').classList.add('activo');
+      reconocimiento.start();
+    }
+
+    // ── PROCESAR COMANDO ───────────────────────────────────────────
+    // Por ahora responde con mensajes de prueba
+    // Aquí se conectará con el servidor Railway más adelante
+    function procesarComando(texto) {
+      setEstado('respondiendo');
+
+      // Convierte el texto a minúsculas para comparar
+      const cmd = texto.toLowerCase();
+      let respuesta = '';
+
+      // Comandos de prueba (se reemplazarán con llamadas al servidor)
+      if (cmd.includes('luz') && cmd.includes('encend')) {
+        respuesta = 'Encendiendo la luz.';
+      } else if (cmd.includes('luz') && (cmd.includes('apag') || cmd.includes('apagá'))) {
+        respuesta = 'Apagando la luz.';
+      } else if (cmd.includes('temperatura')) {
+        respuesta = 'La temperatura es de 22 grados.';
+      } else if (cmd.includes('alarma') && cmd.includes('activ')) {
+        respuesta = 'Activando la alarma.';
+      } else if (cmd.includes('alarma') && cmd.includes('desactiv')) {
+        respuesta = 'Desactivando la alarma.';
+      } else {
+        respuesta = `Escuché: "${texto}". Pronto conectaré con tu casa.`;
+      }
+
+      // Muestra el globo y habla
+      mostrarGlobo(respuesta);
+      hablar(respuesta);
+    }
+
+    // ── SÍNTESIS DE VOZ ────────────────────────────────────────────
+    function hablar(texto) {
+      if (!window.speechSynthesis) return;
+
+      const utterance = new SpeechSynthesisUtterance(texto);
+      utterance.lang = 'es-AR';
+      utterance.rate = 0.95;   // Velocidad ligeramente reducida para ancianos
+      utterance.pitch = 1;
+
+      utterance.onend = () => {
+        setEstado('esperando');
+      };
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // ── GLOBO DE TEXTO ─────────────────────────────────────────────
+    let timerGlobo = null;
+    function mostrarGlobo(texto) {
+      const globo = document.getElementById('globo');
+      globo.textContent = texto;
+      globo.classList.add('visible');
+
+      // El globo desaparece solo después de 6 segundos
+      clearTimeout(timerGlobo);
+      timerGlobo = setTimeout(() => {
+        globo.classList.remove('visible');
+      }, 6000);
+    }
+
+    // ── ESTADO DEL CÍRCULO ─────────────────────────────────────────
+    function setEstado(estado) {
+      const body = document.body;
+      const etiqueta = document.getElementById('estado');
+
+      // Limpia estados anteriores
+      body.classList.remove('escuchando', 'respondiendo');
+
+      if (estado === 'escuchando') {
+        body.classList.add('escuchando');
+        etiqueta.textContent = 'Escuchando...';
+        etiqueta.className = 'estado escuchando';
+      } else if (estado === 'respondiendo') {
+        body.classList.add('respondiendo');
+        etiqueta.textContent = 'Respondiendo...';
+        etiqueta.className = 'estado respondiendo';
+      } else {
+        etiqueta.textContent = 'Esperando...';
+        etiqueta.className = 'estado';
+      }
+    }
+
+    // ── PÁNICO ─────────────────────────────────────────────────────
+    function mostrarPanico() {
+      document.getElementById('modalPanico').classList.add('visible');
+    }
+    function cerrarPanico() {
+      document.getElementById('modalPanico').classList.remove('visible');
+    }
+    function confirmarPanico() {
+      cerrarPanico();
+      // Aquí se conectará con el servidor para enviar WhatsApp y activar alarma
+      mostrarGlobo('🚨 Alerta de emergencia enviada.');
+      hablar('Alerta de emergencia enviada.');
+    }
+
+    // ── NAVEGACIÓN ─────────────────────────────────────────────────
+    function irAmbientes() {
+      // Navegará a ambientes.html
+      mostrarGlobo('Abriendo ambientes...');
+    }
+    function irConfig() {
+      // Navegará a login-admin.html
+      mostrarGlobo('Abriendo configuración...');
+    }
+  </script>
+
+</body>
+</html>
 
