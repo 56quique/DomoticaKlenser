@@ -529,15 +529,14 @@
     function confirmarPanico() {
       cerrarPanico();
       // Aquí se conectará con el servidor para enviar WhatsApp y activar alarma
-      mostrarGlobo('🚨 Alerta de emergencia enviada.');
+      mostrarGlobo('Alerta de emergencia enviada.');
       hablar('Alerta de emergencia enviada.');
     }
 
     // ── NAVEGACIÓN ─────────────────────────────────────────────────
-    function irAmbientes() {
-      // Navegará a ambientes.html
-      mostrarGlobo('Abriendo ambientes...');
-    }
+   function irAmbientes() {
+  window.location.href = 'ambientes.html';
+}
     function irConfig() {
       // Navegará a login-admin.html
       mostrarGlobo('Abriendo configuración...');
