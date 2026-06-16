@@ -1,0 +1,4 @@
+# ── Librerías que necesita el servidor ──────────────────────────
+# Render instala estas librerías automáticamente al hacer el deploy
+
+websockets==12.0   # Librería para comunicación WebSocket
