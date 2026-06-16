@@ -49,7 +49,7 @@
       color: #38bdf8;
     }
 
-    /* Botón pánico */
+    /* Botón pánico — círculo rojo sólido */
     .btn-panico {
       width: 52px;
       height: 52px;
@@ -78,7 +78,7 @@
       color: #555;
       transition: color 0.4s;
     }
-    .estado.escuchando { color: #4ade80; }
+    .estado.escuchando  { color: #4ade80; }
     .estado.respondiendo { color: #a78bfa; }
 
     /* ── Círculo de voz ── */
@@ -215,7 +215,7 @@
     }
     .btn-menu:active { box-shadow: 0 0 20px #38bdf855; }
 
-    /* Botón micrófono principal — estilo WhatsApp audio */
+    /* Botón micrófono — estilo WhatsApp */
     .btn-mic {
       width: 76px; height: 76px;
       border-radius: 50%;
@@ -230,7 +230,7 @@
       box-shadow: 0 0 24px #22c55e66;
       transition: box-shadow 0.15s, transform 0.15s, background 0.15s;
       -webkit-tap-highlight-color: transparent;
-      touch-action: none; /* necesario para mantener presionado en móvil */
+      touch-action: none;
     }
     .btn-mic.activo {
       background: #16a34a;
@@ -238,7 +238,7 @@
       transform: scale(1.08);
     }
 
-    /* Botón configuración (solo visible para admin, por ahora oculto) */
+    /* Botón configuración */
     .btn-config {
       width: 52px; height: 52px;
       border-radius: 50%;
@@ -381,167 +381,17 @@
     </div>
   </div>
 
+  <!-- Navegación -->
   <script>
-    // ── RECONOCIMIENTO DE VOZ ──────────────────────────────────────
-    // Verifica si el navegador soporta la Web Speech API
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    let reconocimiento = null;
+    // Navega a la pantalla de ambientes
+    function irAmbientes() { window.location.href = 'ambientes.html'; }
 
-    if (SpeechRecognition) {
-      reconocimiento = new SpeechRecognition();
-      reconocimiento.lang = 'es-AR';        // Español Argentina
-      reconocimiento.continuous = false;     // Escucha una frase y para
-      reconocimiento.interimResults = false; // Solo resultado final
-
-      // Cuando empieza a escuchar
-      reconocimiento.onstart = () => {
-        setEstado('escuchando');
-      };
-
-      // Cuando obtiene el texto hablado
-      reconocimiento.onresult = (evento) => {
-        const textoEscuchado = evento.results[0][0].transcript;
-        procesarComando(textoEscuchado);
-      };
-
-      // Cuando termina de escuchar (sin resultado)
-      reconocimiento.onend = () => {
-        if (document.body.classList.contains('escuchando')) {
-          setEstado('esperando');
-        }
-        document.getElementById('btnMic').classList.remove('activo');
-      };
-
-      // Si hay error
-      reconocimiento.onerror = () => {
-        setEstado('esperando');
-        mostrarGlobo('No pude escucharte. Intentá de nuevo.');
-        document.getElementById('btnMic').classList.remove('activo');
-      };
-    }
-
-    // ── MANTENER PRESIONADO PARA HABLAR (estilo WhatsApp) ─────────
-    function iniciarVoz(e) {
-      // Evita el scroll en móvil mientras se mantiene presionado
-      if (e) e.preventDefault();
-      if (!reconocimiento) {
-        mostrarGlobo('Tu navegador no soporta reconocimiento de voz.');
-        return;
-      }
-      document.getElementById('btnMic').classList.add('activo');
-      try { reconocimiento.start(); } catch(err) {}
-    }
-
-    function detenerVoz() {
-      document.getElementById('btnMic').classList.remove('activo');
-      try { reconocimiento.stop(); } catch(err) {}
-    }
-
-    // ── PROCESAR COMANDO ───────────────────────────────────────────
-    // Por ahora responde con mensajes de prueba
-    // Aquí se conectará con el servidor Railway más adelante
-    function procesarComando(texto) {
-      setEstado('respondiendo');
-
-      // Convierte el texto a minúsculas para comparar
-      const cmd = texto.toLowerCase();
-      let respuesta = '';
-
-      // Comandos de prueba (se reemplazarán con llamadas al servidor)
-      if (cmd.includes('luz') && cmd.includes('encend')) {
-        respuesta = 'Encendiendo la luz.';
-      } else if (cmd.includes('luz') && (cmd.includes('apag') || cmd.includes('apagá'))) {
-        respuesta = 'Apagando la luz.';
-      } else if (cmd.includes('temperatura')) {
-        respuesta = 'La temperatura es de 22 grados.';
-      } else if (cmd.includes('alarma') && cmd.includes('activ')) {
-        respuesta = 'Activando la alarma.';
-      } else if (cmd.includes('alarma') && cmd.includes('desactiv')) {
-        respuesta = 'Desactivando la alarma.';
-      } else {
-        respuesta = `Escuché: "${texto}". Pronto conectaré con tu casa.`;
-      }
-
-      // Muestra el globo y habla
-      mostrarGlobo(respuesta);
-      hablar(respuesta);
-    }
-
-    // ── SÍNTESIS DE VOZ ────────────────────────────────────────────
-    function hablar(texto) {
-      if (!window.speechSynthesis) return;
-
-      const utterance = new SpeechSynthesisUtterance(texto);
-      utterance.lang = 'es-AR';
-      utterance.rate = 0.95;   // Velocidad ligeramente reducida para ancianos
-      utterance.pitch = 1;
-
-      utterance.onend = () => {
-        setEstado('esperando');
-      };
-
-      window.speechSynthesis.speak(utterance);
-    }
-
-    // ── GLOBO DE TEXTO ─────────────────────────────────────────────
-    let timerGlobo = null;
-    function mostrarGlobo(texto) {
-      const globo = document.getElementById('globo');
-      globo.textContent = texto;
-      globo.classList.add('visible');
-
-      // El globo desaparece solo después de 6 segundos
-      clearTimeout(timerGlobo);
-      timerGlobo = setTimeout(() => {
-        globo.classList.remove('visible');
-      }, 6000);
-    }
-
-    // ── ESTADO DEL CÍRCULO ─────────────────────────────────────────
-    function setEstado(estado) {
-      const body = document.body;
-      const etiqueta = document.getElementById('estado');
-
-      // Limpia estados anteriores
-      body.classList.remove('escuchando', 'respondiendo');
-
-      if (estado === 'escuchando') {
-        body.classList.add('escuchando');
-        etiqueta.textContent = 'Escuchando...';
-        etiqueta.className = 'estado escuchando';
-      } else if (estado === 'respondiendo') {
-        body.classList.add('respondiendo');
-        etiqueta.textContent = 'Respondiendo...';
-        etiqueta.className = 'estado respondiendo';
-      } else {
-        etiqueta.textContent = 'Esperando...';
-        etiqueta.className = 'estado';
-      }
-    }
-
-    // ── PÁNICO ─────────────────────────────────────────────────────
-    function mostrarPanico() {
-      document.getElementById('modalPanico').classList.add('visible');
-    }
-    function cerrarPanico() {
-      document.getElementById('modalPanico').classList.remove('visible');
-    }
-    function confirmarPanico() {
-      cerrarPanico();
-      // Aquí se conectará con el servidor para enviar WhatsApp y activar alarma
-      mostrarGlobo('Alerta de emergencia enviada.');
-      hablar('Alerta de emergencia enviada.');
-    }
-
-    // ── NAVEGACIÓN ─────────────────────────────────────────────────
-   function irAmbientes() {
-  window.location.href = 'ambientes.html';
-}
-    function irConfig() {
-      // Navegará a login-admin.html
-      mostrarGlobo('Abriendo configuración...');
-    }
+    // Navega al login de administrador
+    function irConfig() { window.location.href = 'login-admin.html'; }
   </script>
+
+  <!-- Asistente de voz compartido — debe ir al final -->
+  <script src="asistente.js"></script>
 
 </body>
 </html>
