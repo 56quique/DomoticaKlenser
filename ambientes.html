@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -8,217 +7,55 @@
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;600&family=Dancing+Script:wght@700&display=swap" rel="stylesheet"/>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
     body {
-      background: #000;
-      color: #fff;
-      font-family: 'Rajdhani', sans-serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 30px 16px 40px;
-      user-select: none;
+      background: #000; color: #fff; font-family: 'Rajdhani', sans-serif;
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; padding: 30px 16px 40px; user-select: none;
     }
-
-    /* ── Cabecera ── */
-    .header {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 24px;
-    }
-
-    .logo {
-      display: flex;
-      align-items: baseline;
-      gap: 4px;
-    }
-    .logo-nucleo {
-      font-size: 1.4rem;
-      font-weight: 600;
-      color: #fff;
-      letter-spacing: 4px;
-      text-transform: uppercase;
-    }
-    .logo-home {
-      font-family: 'Dancing Script', cursive;
-      font-size: 1.1rem;
-      color: #38bdf8;
-    }
-
-    /* Botón pánico */
+    .header { width: 100%; display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .logo { display: flex; align-items: baseline; gap: 4px; }
+    .logo-nucleo { font-size: 1.4rem; font-weight: 600; color: #fff; letter-spacing: 4px; text-transform: uppercase; }
+    .logo-home { font-family: 'Dancing Script', cursive; font-size: 1.1rem; color: #38bdf8; }
     .btn-panico {
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
-      background: #ef4444;
-      border: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      width: 52px; height: 52px; border-radius: 50%; background: #ef4444; border: none;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
       box-shadow: 0 0 20px #ef444466, 0 0 40px #ef444422;
-      transition: box-shadow 0.2s, transform 0.1s;
-      -webkit-tap-highlight-color: transparent;
+      transition: box-shadow 0.2s, transform 0.1s; -webkit-tap-highlight-color: transparent;
     }
-    .btn-panico:active {
-      box-shadow: 0 0 40px #ef4444cc;
-      transform: scale(0.94);
-    }
-
-    /* ── Título de sección ── */
-    .seccion-titulo {
-      width: 100%;
-      font-size: 0.8rem;
-      letter-spacing: 4px;
-      text-transform: uppercase;
-      color: #555;
-      margin-bottom: 16px;
-      text-align: left;
-    }
-
-    /* ── Grilla de ambientes ── */
-    .grilla {
-      width: 100%;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 30px;
-    }
-
-    /* Tarjeta de ambiente */
+    .btn-panico:active { box-shadow: 0 0 40px #ef4444cc; transform: scale(0.94); }
+    .seccion-titulo { width: 100%; font-size: 0.8rem; letter-spacing: 4px; text-transform: uppercase; color: #555; margin-bottom: 16px; text-align: left; }
+    .grilla { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 30px; }
     .tarjeta {
-      background: #0a1a2e;
-      border: 1px solid #1e3a5f;
-      border-radius: 20px;
-      padding: 24px 12px 18px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-      cursor: pointer;
+      background: #0a1a2e; border: 1px solid #1e3a5f; border-radius: 20px;
+      padding: 24px 12px 18px; display: flex; flex-direction: column;
+      align-items: center; gap: 12px; cursor: pointer;
       transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.15s;
-      -webkit-tap-highlight-color: transparent;
-      min-height: 120px;
-      justify-content: center;
+      -webkit-tap-highlight-color: transparent; min-height: 120px; justify-content: center;
     }
-    .tarjeta:active {
-      background: #0f2a4a;
-      border-color: #38bdf8;
-      box-shadow: 0 0 20px #38bdf822;
-      transform: scale(0.97);
-    }
-
-    /* Ícono SVG dentro de la tarjeta */
-    .tarjeta svg {
-      width: 36px;
-      height: 36px;
-      color: #38bdf8;
-      flex-shrink: 0;
-    }
-
-    /* Nombre del ambiente */
-    .tarjeta-nombre {
-      font-size: 0.95rem;
-      font-weight: 600;
-      letter-spacing: 1px;
-      color: #e2e8f0;
-      text-align: center;
-      line-height: 1.3;
-    }
-
-    /* ── Botón volver ── */
+    .tarjeta:active { background: #0f2a4a; border-color: #38bdf8; box-shadow: 0 0 20px #38bdf822; transform: scale(0.97); }
+    .tarjeta svg { width: 36px; height: 36px; color: #38bdf8; flex-shrink: 0; }
+    .tarjeta-nombre { font-size: 0.95rem; font-weight: 600; letter-spacing: 1px; color: #e2e8f0; text-align: center; line-height: 1.3; }
     .btn-volver {
-      width: 100%;
-      max-width: 320px;
-      padding: 16px 0;
-      border: 2px solid #1e3a5f;
-      border-radius: 50px;
-      background: transparent;
-      color: #38bdf8;
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 1rem;
-      font-weight: 600;
-      letter-spacing: 4px;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: border-color 0.2s, box-shadow 0.2s;
+      width: 100%; max-width: 320px; padding: 16px 0;
+      border: 2px solid #1e3a5f; border-radius: 50px; background: transparent;
+      color: #38bdf8; font-family: 'Rajdhani', sans-serif; font-size: 1rem;
+      font-weight: 600; letter-spacing: 4px; text-transform: uppercase;
+      cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s;
       -webkit-tap-highlight-color: transparent;
     }
-    .btn-volver:active {
-      border-color: #38bdf8;
-      box-shadow: 0 0 20px #38bdf833;
-    }
-
-    /* ── Modal de pánico ── */
+    .btn-volver:active { border-color: #38bdf8; box-shadow: 0 0 20px #38bdf833; }
     .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: #000000cc;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s;
+      position: fixed; inset: 0; background: #000000cc;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s;
     }
-    .modal-overlay.visible {
-      opacity: 1;
-      pointer-events: all;
-    }
-    .modal {
-      background: #1a0000;
-      border: 2px solid #ef4444;
-      border-radius: 20px;
-      padding: 30px 24px;
-      text-align: center;
-      max-width: 280px;
-      box-shadow: 0 0 60px #ef444466;
-    }
-    .modal h2 {
-      font-size: 1.4rem;
-      color: #ef4444;
-      letter-spacing: 2px;
-      margin-bottom: 10px;
-    }
-    .modal p {
-      font-size: 0.95rem;
-      color: #aaa;
-      margin-bottom: 24px;
-      line-height: 1.5;
-    }
-    .modal-btns {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-    }
-    .btn-confirmar {
-      padding: 12px 24px;
-      background: #ef4444;
-      border: none;
-      border-radius: 50px;
-      color: #fff;
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 1rem;
-      font-weight: 600;
-      letter-spacing: 2px;
-      cursor: pointer;
-    }
-    .btn-cancelar {
-      padding: 12px 24px;
-      background: transparent;
-      border: 2px solid #555;
-      border-radius: 50px;
-      color: #aaa;
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 1rem;
-      font-weight: 600;
-      letter-spacing: 2px;
-      cursor: pointer;
-    }
+    .modal-overlay.visible { opacity: 1; pointer-events: all; }
+    .modal { background: #1a0000; border: 2px solid #ef4444; border-radius: 20px; padding: 30px 24px; text-align: center; max-width: 280px; box-shadow: 0 0 60px #ef444466; }
+    .modal h2 { font-size: 1.4rem; color: #ef4444; letter-spacing: 2px; margin-bottom: 10px; }
+    .modal p { font-size: 0.95rem; color: #aaa; margin-bottom: 24px; line-height: 1.5; }
+    .modal-btns { display: flex; gap: 12px; justify-content: center; }
+    .btn-confirmar { padding: 12px 24px; background: #ef4444; border: none; border-radius: 50px; color: #fff; font-family: 'Rajdhani', sans-serif; font-size: 1rem; font-weight: 600; letter-spacing: 2px; cursor: pointer; }
+    .btn-cancelar { padding: 12px 24px; background: transparent; border: 2px solid #555; border-radius: 50px; color: #aaa; font-family: 'Rajdhani', sans-serif; font-size: 1rem; font-weight: 600; letter-spacing: 2px; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -232,18 +69,17 @@
     <button class="btn-panico" onclick="mostrarPanico()" title="Emergencia"></button>
   </div>
 
-  <!-- Título -->
+  <!-- Título de sección -->
   <div class="seccion-titulo">Ambientes</div>
 
-  <!-- Grilla de ambientes -->
+  <!-- Grilla de ambientes — 2 columnas -->
   <div class="grilla">
 
     <!-- Habitación principal -->
     <div class="tarjeta" onclick="irAmbiente('habitacion-principal')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10H3V7z"/>
-        <path d="M3 13h18"/>
-        <path d="M8 13v4M16 13v4"/>
+        <path d="M3 13h18"/><path d="M8 13v4M16 13v4"/>
         <path d="M7 10h3M14 10h3"/>
       </svg>
       <span class="tarjeta-nombre">Habitación Principal</span>
@@ -253,8 +89,7 @@
     <div class="tarjeta" onclick="irAmbiente('habitacion-secundaria')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10H3V7z"/>
-        <path d="M3 13h18"/>
-        <path d="M8 13v4M16 13v4"/>
+        <path d="M3 13h18"/><path d="M8 13v4M16 13v4"/>
         <path d="M7 10h3M14 10h3"/>
       </svg>
       <span class="tarjeta-nombre">Habitación Secundaria</span>
@@ -277,8 +112,7 @@
     <div class="tarjeta" onclick="irAmbiente('living')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M2 9a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9z"/>
-        <path d="M4 13v4M20 13v4"/>
-        <path d="M6 17h12"/>
+        <path d="M4 13v4M20 13v4M6 17h12"/>
         <rect x="8" y="4" width="8" height="5" rx="1"/>
       </svg>
       <span class="tarjeta-nombre">Living</span>
@@ -289,8 +123,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M4 12h16v4a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4v-4z"/>
         <path d="M4 12V6a2 2 0 0 1 2-2h1a2 2 0 0 1 2 2v1"/>
-        <path d="M9 7h6"/>
-        <path d="M8 20v1M16 20v1"/>
+        <path d="M9 7h6M8 20v1M16 20v1"/>
       </svg>
       <span class="tarjeta-nombre">Baño</span>
     </div>
@@ -300,8 +133,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M12 2L8 8h8L12 2z"/>
         <path d="M12 8v6"/>
-        <path d="M9 14H6l-2 4h16l-2-4h-3"/>
-        <path d="M9 14h6"/>
+        <path d="M9 14H6l-2 4h16l-2-4h-3M9 14h6"/>
       </svg>
       <span class="tarjeta-nombre">Patio Trasero</span>
     </div>
@@ -309,8 +141,7 @@
     <!-- Patio delantero -->
     <div class="tarjeta" onclick="irAmbiente('patio-delantero')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 17l4-8 4 4 3-6 4 10"/>
-        <path d="M3 17h18"/>
+        <path d="M3 17l4-8 4 4 3-6 4 10M3 17h18"/>
         <circle cx="17" cy="6" r="2"/>
         <path d="M17 4V2"/>
       </svg>
@@ -321,8 +152,7 @@
     <div class="tarjeta" onclick="irAmbiente('galeria-lateral')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z"/>
-        <path d="M3 9h18"/>
-        <path d="M8 20V12h8v8"/>
+        <path d="M3 9h18M8 20V12h8v8"/>
       </svg>
       <span class="tarjeta-nombre">Galería Lateral</span>
     </div>
@@ -332,7 +162,7 @@
   <!-- Botón volver -->
   <button class="btn-volver" onclick="volver()">← Volver</button>
 
-  <!-- Modal de pánico -->
+  <!-- Modal de emergencia -->
   <div class="modal-overlay" id="modalPanico">
     <div class="modal">
       <h2>EMERGENCIA</h2>
@@ -344,32 +174,14 @@
     </div>
   </div>
 
+  <!-- Navegación entre pantallas -->
   <script>
-    // Navega al detalle del ambiente seleccionado
-    // Por ahora muestra el nombre, luego navegará a ambiente.html?id=...
-    function irAmbiente(id) {
-      // Próximamente: window.location.href = `ambiente.html?id=${id}`;
-      alert(`Abriendo: ${id.replace(/-/g, ' ')}`);
-    }
-
-    // Vuelve a la pantalla principal
-    function volver() {
-      window.location.href = 'pricipal.html';
-    }
-
-    // Pánico
-    function mostrarPanico() {
-      document.getElementById('modalPanico').classList.add('visible');
-    }
-    function cerrarPanico() {
-      document.getElementById('modalPanico').classList.remove('visible');
-    }
-    function confirmarPanico() {
-      cerrarPanico();
-      // Próximamente: conectar con servidor
-      alert('Alerta de emergencia enviada.');
-    }
+    function irAmbiente(id) { window.location.href = 'ambiente.html?id=' + id; }
+    function volver()       { window.location.href = 'principal.html'; }
   </script>
+
+  <!-- Asistente de voz compartido — siempre al final -->
+  <script src="asistente.js"></script>
 
 </body>
 </html>
