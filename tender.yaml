@@ -1,0 +1,10 @@
+# ── Configuración para Render ────────────────────────────────────
+# Este archivo le dice a Render cómo ejecutar el servidor
+
+services:
+  - type: web              # Tipo de servicio: aplicación web
+    name: nucleo-home      # Nombre del servicio en Render
+    runtime: python        # Lenguaje: Python
+    buildCommand: pip install -r requirements.txt   # Instala las librerías
+    startCommand: python servidor.py                # Comando para iniciar
+    plan: free             # Plan gratuito
