@@ -1,37 +1,108 @@
 /* ════════════════════════════════════════════════════════════════
-   NÚCLEO HOME — asistente.js
+   NÚCLEO Home — asistente.js
    Archivo compartido de reconocimiento y síntesis de voz.
    Se incluye en TODAS las pantallas con:
    <script src="asistente.js"></script>
 
-   Cada pantalla puede tener o no estos elementos opcionales:
-   - <body> con clases 'escuchando' / 'respondiendo' para animar el círculo
-   - <div id="estado">           → texto de estado (Esperando / Escuchando...)
-   - <div id="globo">            → globo de texto con la respuesta
-   - <button id="btnMic">        → botón de mantener presionado para hablar
-   - <div id="modalPanico">      → modal de confirmación de emergencia
-
-   Si alguno no existe en la pantalla, el script simplemente lo ignora.
+   Ahora incluye conexión WebSocket con el servidor en Render.
+   El flujo es:
+     1. La app abre conexión con el servidor al cargar
+     2. Se identifica como "dashboard"
+     3. Cuando el usuario habla, manda el comando al servidor
+     4. El servidor lo reenvía al ESP32
+     5. El ESP32 responde y el servidor reenvía la respuesta al dashboard
+     6. El dashboard muestra y dice la respuesta en voz alta
    ════════════════════════════════════════════════════════════════ */
 
 
-/* ── RECONOCIMIENTO DE VOZ ─────────────────────────────────────── */
+/* ── CONFIGURACIÓN ──────────────────────────────────────────────
+   Cambiá esta URL si en el futuro cambiás de servidor           */
+const URL_SERVIDOR = 'wss://domoticaklenser.onrender.com';
+/* ────────────────────────────────────────────────────────────── */
+
+
+/* ── CONEXIÓN WEBSOCKET ─────────────────────────────────────────
+   ws es la conexión con el servidor. Se abre al cargar la página
+   y se mantiene abierta mientras el usuario está en el dashboard */
+let ws = null;
+
+function conectarServidor() {
+  // Crea la conexión WebSocket con el servidor
+  ws = new WebSocket(URL_SERVIDOR);
+
+  // Cuando la conexión se abre exitosamente
+  ws.onopen = () => {
+    console.log('✅ Conectado al servidor NÚCLEO Home');
+
+    // Le decimos al servidor que somos el dashboard
+    ws.send(JSON.stringify({ tipo: 'dashboard' }));
+  };
+
+  // Cuando llega un mensaje del servidor (que viene del ESP32)
+  ws.onmessage = (evento) => {
+    try {
+      const datos = JSON.parse(evento.data);   // Convertimos el JSON a objeto
+
+      if (datos.tipo === 'respuesta') {
+        // El ESP32 respondió con una acción ejecutada
+        setEstado('respondiendo');
+        mostrarGlobo(datos.mensaje);
+        hablar(datos.mensaje);
+
+      } else if (datos.tipo === 'estado') {
+        // El servidor nos informa sobre el estado de la conexión
+        console.log('Estado servidor:', datos.mensaje);
+
+      } else if (datos.tipo === 'error') {
+        // Algo salió mal en el servidor o el ESP32 no está conectado
+        setEstado('esperando');
+        mostrarGlobo(datos.mensaje);
+        hablar(datos.mensaje);
+      }
+
+    } catch (e) {
+      console.error('Error procesando mensaje del servidor:', e);
+    }
+  };
+
+  // Cuando la conexión se cierra (por inactividad o error)
+  ws.onclose = () => {
+    console.log('Conexión cerrada, reintentando en 5 segundos...');
+    // Reintenta conectar automáticamente después de 5 segundos
+    setTimeout(conectarServidor, 5000);
+  };
+
+  // Si hay un error de conexión
+  ws.onerror = (error) => {
+    console.error('Error WebSocket:', error);
+  };
+}
+
+// Inicia la conexión al cargar la página
+conectarServidor();
+
+
+/* ── RECONOCIMIENTO DE VOZ ──────────────────────────────────────
+   Usa la Web Speech API nativa de Android/Chrome               */
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 let reconocimiento = null;
 
 if (SpeechRecognition) {
   reconocimiento = new SpeechRecognition();
-  reconocimiento.lang = 'es-AR';
-  reconocimiento.continuous = false;
-  reconocimiento.interimResults = false;
+  reconocimiento.lang = 'es-AR';        // Español Argentina
+  reconocimiento.continuous = false;     // Escucha una frase y para
+  reconocimiento.interimResults = false; // Solo resultado final
 
+  // Cuando empieza a escuchar
   reconocimiento.onstart = () => setEstado('escuchando');
 
+  // Cuando obtiene el texto hablado
   reconocimiento.onresult = (evento) => {
     const textoEscuchado = evento.results[0][0].transcript;
     procesarComando(textoEscuchado);
   };
 
+  // Cuando termina de escuchar
   reconocimiento.onend = () => {
     if (document.body.classList.contains('escuchando')) {
       setEstado('esperando');
@@ -40,6 +111,7 @@ if (SpeechRecognition) {
     if (btn) btn.classList.remove('activo');
   };
 
+  // Si hay error de reconocimiento
   reconocimiento.onerror = () => {
     setEstado('esperando');
     mostrarGlobo('No pude escucharte. Intentá de nuevo.');
@@ -49,7 +121,7 @@ if (SpeechRecognition) {
 }
 
 
-/* ── MANTENER PRESIONADO PARA HABLAR (estilo WhatsApp) ─────────── */
+/* ── MANTENER PRESIONADO PARA HABLAR (estilo WhatsApp) ─────────*/
 function iniciarVoz(e) {
   if (e) e.preventDefault();
   if (!reconocimiento) {
@@ -68,13 +140,14 @@ function detenerVoz() {
 }
 
 
-/* ── SÍNTESIS DE VOZ ────────────────────────────────────────────── */
+/* ── SÍNTESIS DE VOZ ────────────────────────────────────────────
+   El asistente habla la respuesta en español argentino          */
 function hablar(texto) {
   if (!window.speechSynthesis) return;
 
   const utterance = new SpeechSynthesisUtterance(texto);
   utterance.lang = 'es-AR';
-  utterance.rate = 0.95;
+  utterance.rate = 0.95;   // Velocidad ligeramente reducida para ancianos
   utterance.pitch = 1;
 
   utterance.onend = () => setEstado('esperando');
@@ -83,11 +156,12 @@ function hablar(texto) {
 }
 
 
-/* ── GLOBO DE TEXTO ─────────────────────────────────────────────── */
+/* ── GLOBO DE TEXTO ─────────────────────────────────────────────
+   Muestra la respuesta en pantalla y desaparece a los 6 segundos */
 let timerGlobo = null;
 function mostrarGlobo(texto) {
   const globo = document.getElementById('globo');
-  if (!globo) return; // esta pantalla no tiene globo
+  if (!globo) return;
 
   globo.textContent = texto;
   globo.classList.add('visible');
@@ -99,7 +173,8 @@ function mostrarGlobo(texto) {
 }
 
 
-/* ── ESTADO DEL CÍRCULO ─────────────────────────────────────────── */
+/* ── ESTADO DEL CÍRCULO ─────────────────────────────────────────
+   Cambia el color del círculo según el estado del asistente     */
 function setEstado(estado) {
   const body = document.body;
   const etiqueta = document.getElementById('estado');
@@ -118,54 +193,51 @@ function setEstado(estado) {
 }
 
 
-/* ── MAPA DE NAVEGACIÓN POR VOZ ─────────────────────────────────── */
-// Cada ambiente puede tener varias formas de nombrarlo.
-// La clave es el archivo de destino, el valor es la lista de palabras que lo activan.
+/* ── MAPA DE NAVEGACIÓN POR VOZ ─────────────────────────────────
+   Define qué palabras activan la navegación a cada pantalla     */
 const MAPA_AMBIENTES = {
-  'ambiente.html?id=habitacion-principal': ['habitación principal', 'habitacion principal', 'dormitorio principal', 'cuarto principal'],
-  'ambiente.html?id=habitacion-secundaria': ['habitación secundaria', 'habitacion secundaria', 'dormitorio secundario', 'segundo cuarto', 'segunda habitación'],
-  'ambiente.html?id=cocina': ['cocina'],
-  'ambiente.html?id=living': ['living', 'sala', 'sala de estar'],
-  'ambiente.html?id=bano': ['baño', 'bano'],
-  'ambiente.html?id=patio-trasero': ['patio trasero', 'patio de atrás', 'patio de atras', 'fondo'],
-  'ambiente.html?id=patio-delantero': ['patio delantero', 'patio de adelante', 'frente'],
-  'ambiente.html?id=galeria-lateral': ['galería lateral', 'galeria lateral', 'galería', 'galeria'],
+  'ambiente.html?id=habitacion-principal':  ['habitación principal', 'habitacion principal', 'dormitorio principal', 'cuarto principal'],
+  'ambiente.html?id=habitacion-secundaria': ['habitación secundaria', 'habitacion secundaria', 'dormitorio secundario', 'segundo cuarto'],
+  'ambiente.html?id=cocina':                ['cocina'],
+  'ambiente.html?id=living':                ['living', 'sala', 'sala de estar'],
+  'ambiente.html?id=bano':                  ['baño', 'bano'],
+  'ambiente.html?id=patio-trasero':         ['patio trasero', 'patio de atrás', 'fondo'],
+  'ambiente.html?id=patio-delantero':       ['patio delantero', 'patio de adelante', 'frente'],
+  'ambiente.html?id=galeria-lateral':       ['galería lateral', 'galeria lateral', 'galería', 'galeria'],
 };
 
-// Páginas generales del sistema
 const MAPA_PANTALLAS = {
-  'principal.html': ['inicio', 'pantalla principal', 'menú principal', 'menu principal', 'asistente'],
-  'ambientes.html': ['ambientes', 'ver ambientes', 'lista de ambientes', 'habitaciones'],
-  'alarma.html': ['alarma', 'pantalla de alarma', 'sistema de alarma'],
+  'principal.html': ['inicio', 'pantalla principal', 'menú principal', 'asistente'],
+  'ambientes.html': ['ambientes', 'ver ambientes', 'habitaciones'],
+  'alarma.html':    ['alarma', 'pantalla de alarma'],
 };
 
 
-/* ── PROCESAR COMANDO DE VOZ ────────────────────────────────────── */
-// Esta función intenta primero detectar comandos de NAVEGACIÓN.
-// Si no es un comando de navegación, lo deja como comando de DISPOSITIVOS
-// (que más adelante se conectará con el servidor Railway).
+/* ── PROCESAR COMANDO DE VOZ ────────────────────────────────────
+   Primero intenta navegación local. Si no es navegación,
+   manda el comando al servidor para que lo procese el ESP32     */
 function procesarComando(texto) {
   setEstado('respondiendo');
   const cmd = texto.toLowerCase().trim();
 
   // ── 1. Comando "volver" ──
-  if (cmd === 'volver' || cmd === 'atrás' || cmd === 'atras' || cmd === 'volver atrás') {
+  if (cmd === 'volver' || cmd === 'atrás' || cmd === 'atras') {
     responderYNavegar('Volviendo.', 'principal.html');
     return;
   }
 
-  // ── 2. Comando "ir a ambiente X" o "abrir X" ──
+  // ── 2. Navegar a un ambiente por voz ──
   for (const [destino, alias] of Object.entries(MAPA_AMBIENTES)) {
     for (const palabra of alias) {
       if (cmd.includes(palabra)) {
-        const nombreAmbiente = palabra.charAt(0).toUpperCase() + palabra.slice(1);
-        responderYNavegar(`Abriendo ${nombreAmbiente}.`, destino);
+        const nombre = palabra.charAt(0).toUpperCase() + palabra.slice(1);
+        responderYNavegar(`Abriendo ${nombre}.`, destino);
         return;
       }
     }
   }
 
-  // ── 3. Comando para ir a pantallas generales ──
+  // ── 3. Navegar a pantallas generales ──
   for (const [destino, alias] of Object.entries(MAPA_PANTALLAS)) {
     for (const palabra of alias) {
       if (cmd.includes(palabra)) {
@@ -175,30 +247,26 @@ function procesarComando(texto) {
     }
   }
 
-  // ── 4. Comandos de dispositivos (de prueba por ahora) ──
-  let respuesta = '';
-  if (cmd.includes('luz') && cmd.includes('encend')) {
-    respuesta = 'Encendiendo la luz.';
-  } else if (cmd.includes('luz') && (cmd.includes('apag'))) {
-    respuesta = 'Apagando la luz.';
-  } else if (cmd.includes('temperatura')) {
-    respuesta = 'La temperatura es de 22 grados.';
-  } else if (cmd.includes('alarma') && cmd.includes('activ')) {
-    respuesta = 'Activando la alarma.';
-  } else if (cmd.includes('alarma') && cmd.includes('desactiv')) {
-    respuesta = 'Desactivando la alarma.';
+  // ── 4. Comando para el ESP32 — se manda al servidor ──
+  // Si el servidor está conectado, mandamos el comando
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({
+      tipo: 'comando',       // Tipo de mensaje
+      texto: texto,          // Texto original que dijo el usuario
+      comando: cmd           // Texto en minúsculas para procesar
+    }));
+    // Mientras esperamos respuesta del ESP32 mostramos un mensaje
+    mostrarGlobo('Procesando...');
   } else {
-    respuesta = `Escuché: "${texto}". Pronto conectaré con tu casa.`;
+    // Si no hay conexión con el servidor, respondemos localmente
+    mostrarGlobo('Sin conexión con el servidor.');
+    hablar('Sin conexión con el servidor.');
   }
-
-  mostrarGlobo(respuesta);
-  hablar(respuesta);
 }
 
 
-/* ── RESPONDER POR VOZ Y LUEGO NAVEGAR ──────────────────────────── */
-// Dice la frase en voz alta, muestra el globo, y cuando termina de hablar
-// navega a la pantalla destino.
+/* ── RESPONDER POR VOZ Y NAVEGAR ────────────────────────────────
+   Dice la frase, muestra el globo, y navega cuando termina      */
 function responderYNavegar(frase, destino) {
   mostrarGlobo(frase);
 
@@ -210,16 +278,13 @@ function responderYNavegar(frase, destino) {
   const utterance = new SpeechSynthesisUtterance(frase);
   utterance.lang = 'es-AR';
   utterance.rate = 0.95;
-
-  utterance.onend = () => {
-    window.location.href = destino;
-  };
-
+  utterance.onend = () => { window.location.href = destino; };
   window.speechSynthesis.speak(utterance);
 }
 
 
-/* ── PÁNICO (compartido en todas las pantallas) ─────────────────── */
+/* ── PÁNICO ─────────────────────────────────────────────────────
+   Botón de emergencia disponible en todas las pantallas         */
 function mostrarPanico() {
   const modal = document.getElementById('modalPanico');
   if (modal) modal.classList.add('visible');
@@ -230,7 +295,10 @@ function cerrarPanico() {
 }
 function confirmarPanico() {
   cerrarPanico();
-  // Próximamente: conectar con servidor para enviar WhatsApp y activar alarma
+  // Manda alerta de pánico al servidor para que notifique por WhatsApp
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ tipo: 'panico' }));
+  }
   mostrarGlobo('Alerta de emergencia enviada.');
   hablar('Alerta de emergencia enviada.');
 }
