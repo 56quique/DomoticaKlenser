@@ -3,166 +3,202 @@
 # Servidor WebSocket central que conecta el dashboard (GitHub Pages)
 # con el ESP32 Maestro dentro de la casa.
 #
-# Cómo funciona:
-#   1. El ESP32 se conecta a este servidor y queda "escuchando"
-#   2. El dashboard también se conecta y queda "escuchando"
-#   3. Cuando el dashboard manda un comando, el servidor lo reenvía al ESP32
-#   4. Cuando el ESP32 manda datos, el servidor los reenvía al dashboard
-#   5. Todo los mensajes viajan en formato JSON
+# Tipos de mensaje que maneja:
+#   Dashboard → Servidor:
+#     {"tipo": "dashboard"}           → identificación inicial
+#     {"tipo": "comando", "texto": "encendé la luz", "comando": "encendé la luz"}
+#     {"tipo": "panico"}              → alerta de emergencia
 #
-# Para correr localmente (prueba en tu PC):
-#   pip install websockets
-#   python servidor.py
+#   ESP32 → Servidor:
+#     {"tipo": "esp32"}               → identificación inicial
+#     {"tipo": "respuesta", "mensaje": "Luz encendida"}
+#     {"tipo": "datos", "temperatura": 22, "humedad": 60}
 #
-# Para correr en Render:
-#   Este archivo se sube al repositorio de GitHub y Render lo ejecuta solo.
+#   Servidor → Dashboard:
+#     {"tipo": "estado", "mensaje": "Conectado"}
+#     {"tipo": "respuesta", "mensaje": "Luz encendida"}
+#     {"tipo": "error", "mensaje": "ESP32 no conectado"}
+#
+#   Servidor → ESP32:
+#     {"tipo": "comando", "texto": "encendé la luz", "comando": "encendé la luz"}
+#     {"tipo": "panico"}
 # ════════════════════════════════════════════════════════════════
 
-import asyncio        # Permite manejar múltiples conexiones al mismo tiempo
-import websockets     # Librería para comunicación WebSocket
-import json           # Para leer y escribir mensajes en formato JSON
-import logging        # Para registrar eventos y errores en la consola
-import os             # Para leer variables de entorno (como el puerto de Render)
+import asyncio
+import websockets
+import json
+import logging
+import os
 
 # ── CONFIGURACIÓN DE LOGS ────────────────────────────────────────
-# Muestra mensajes con fecha y hora en la consola de Render
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s — %(levelname)s — %(message)s'
 )
 log = logging.getLogger(__name__)
 
-# ── REGISTRO DE CLIENTES CONECTADOS ─────────────────────────────
-# Guardamos las conexiones activas en dos variables separadas
-# para saber quién es el dashboard y quién es el ESP32
-
+# ── CLIENTES CONECTADOS ──────────────────────────────────────────
 dashboard = None   # Conexión del navegador (GitHub Pages)
 esp32     = None   # Conexión del ESP32 Maestro
 
-# ── FUNCIÓN PRINCIPAL — maneja cada cliente que se conecta ───────
+# ── MANEJO DE CADA CLIENTE ───────────────────────────────────────
 async def manejar_conexion(websocket):
     global dashboard, esp32
 
-    # El primer mensaje que manda un cliente debe identificarse
-    # Esperamos ese mensaje de identificación
+    # Esperamos el mensaje de identificación
     try:
         mensaje_inicial = await websocket.recv()
-        datos = json.loads(mensaje_inicial)   # Convertimos el texto JSON a diccionario Python
-
-        # El cliente debe mandar: {"tipo": "dashboard"} o {"tipo": "esp32"}
-        tipo = datos.get("tipo", "desconocido")
-
+        datos = json.loads(mensaje_inicial)
+        tipo  = datos.get("tipo", "desconocido")
     except Exception as e:
-        log.warning(f"Error en identificación de cliente: {e}")
+        log.warning(f"Error en identificación: {e}")
         await websocket.close()
         return
 
-    # ── Cliente es el DASHBOARD ──────────────────────────────────
+    # ── Cliente DASHBOARD ────────────────────────────────────────
     if tipo == "dashboard":
         dashboard = websocket
         log.info("✅ Dashboard conectado")
 
-        # Avisamos al dashboard que la conexión fue exitosa
-        await websocket.send(json.dumps({
+        # Informamos al dashboard que la conexión fue exitosa
+        await enviar(dashboard, {
             "tipo": "estado",
             "mensaje": "Conectado a NÚCLEO Home"
-        }))
+        })
+
+        # Si el ESP32 ya estaba conectado, se lo informamos al dashboard
+        if esp32:
+            await enviar(dashboard, {
+                "tipo": "estado",
+                "mensaje": "ESP32 conectado"
+            })
 
         try:
-            # Escuchamos mensajes del dashboard indefinidamente
             async for mensaje in websocket:
-                log.info(f"Dashboard → ESP32: {mensaje}")
-
-                # Si el ESP32 está conectado, le reenviamos el mensaje
-                if esp32:
-                    await esp32.send(mensaje)
-                else:
-                    # Si el ESP32 no está conectado, avisamos al dashboard
-                    await websocket.send(json.dumps({
-                        "tipo": "error",
-                        "mensaje": "ESP32 no conectado"
-                    }))
-
+                await procesar_mensaje_dashboard(mensaje)
         except websockets.exceptions.ConnectionClosed:
             log.info("Dashboard desconectado")
         finally:
-            dashboard = None   # Limpiamos la variable cuando se desconecta
+            dashboard = None
 
-    # ── Cliente es el ESP32 ──────────────────────────────────────
+    # ── Cliente ESP32 ────────────────────────────────────────────
     elif tipo == "esp32":
         esp32 = websocket
         log.info("✅ ESP32 conectado")
 
         # Avisamos al dashboard que el ESP32 está disponible
         if dashboard:
-            await dashboard.send(json.dumps({
+            await enviar(dashboard, {
                 "tipo": "estado",
                 "mensaje": "ESP32 conectado"
-            }))
+            })
 
         try:
-            # Escuchamos mensajes del ESP32 indefinidamente
             async for mensaje in websocket:
-                log.info(f"ESP32 → Dashboard: {mensaje}")
-
-                # Si el dashboard está conectado, le reenviamos el mensaje
-                if dashboard:
-                    await dashboard.send(mensaje)
-
+                await procesar_mensaje_esp32(mensaje)
         except websockets.exceptions.ConnectionClosed:
             log.info("ESP32 desconectado")
-            # Avisamos al dashboard que el ESP32 se desconectó
             if dashboard:
-                await dashboard.send(json.dumps({
+                await enviar(dashboard, {
                     "tipo": "error",
                     "mensaje": "ESP32 desconectado"
-                }))
+                })
         finally:
-            esp32 = None   # Limpiamos la variable cuando se desconecta
+            esp32 = None
 
-    # ── Cliente desconocido ──────────────────────────────────────
     else:
         log.warning(f"Cliente desconocido: {tipo}")
         await websocket.close()
 
-# ── FUNCIÓN PING — mantiene vivas las conexiones ─────────────────
-# WebSocket puede cerrarse si no hay actividad. Esta función manda
-# un "ping" silencioso a los clientes conectados cada 30 segundos.
+
+# ── PROCESAR MENSAJES DEL DASHBOARD ─────────────────────────────
+async def procesar_mensaje_dashboard(mensaje):
+    try:
+        datos = json.loads(mensaje)
+        tipo  = datos.get("tipo", "")
+        log.info(f"Dashboard → Servidor: {datos}")
+
+        # Comando de voz del usuario
+        if tipo == "comando":
+            if esp32:
+                # Reenviamos el comando al ESP32
+                await enviar(esp32, datos)
+            else:
+                # El ESP32 no está conectado, avisamos al dashboard
+                await enviar(dashboard, {
+                    "tipo": "respuesta",
+                    "mensaje": "No hay conexión con la casa. Verificá que el sistema esté encendido."
+                })
+
+        # Botón de pánico
+        elif tipo == "panico":
+            log.warning("🚨 ALERTA DE PÁNICO recibida")
+            if esp32:
+                # Le mandamos la alerta al ESP32 para que active la alarma
+                await enviar(esp32, {"tipo": "panico"})
+            # Confirmamos al dashboard
+            await enviar(dashboard, {
+                "tipo": "respuesta",
+                "mensaje": "Alerta de emergencia enviada."
+            })
+
+    except Exception as e:
+        log.error(f"Error procesando mensaje del dashboard: {e}")
+
+
+# ── PROCESAR MENSAJES DEL ESP32 ──────────────────────────────────
+async def procesar_mensaje_esp32(mensaje):
+    try:
+        datos = json.loads(mensaje)
+        tipo  = datos.get("tipo", "")
+        log.info(f"ESP32 → Servidor: {datos}")
+
+        # El ESP32 confirma que ejecutó una acción
+        if tipo == "respuesta":
+            if dashboard:
+                await enviar(dashboard, datos)
+
+        # El ESP32 manda datos de sensores (temperatura, humedad, etc.)
+        elif tipo == "datos":
+            if dashboard:
+                await enviar(dashboard, datos)
+
+    except Exception as e:
+        log.error(f"Error procesando mensaje del ESP32: {e}")
+
+
+# ── FUNCIÓN AUXILIAR PARA ENVIAR MENSAJES ────────────────────────
+# Convierte el diccionario a JSON y lo manda por WebSocket
+async def enviar(cliente, datos):
+    try:
+        await cliente.send(json.dumps(datos))
+    except Exception as e:
+        log.error(f"Error enviando mensaje: {e}")
+
+
+# ── PING PERIÓDICO ───────────────────────────────────────────────
+# Mantiene vivas las conexiones mandando un ping cada 30 segundos
 async def ping_periodico():
     while True:
-        await asyncio.sleep(30)   # Espera 30 segundos
-
-        # Manda ping al dashboard si está conectado
+        await asyncio.sleep(30)
         if dashboard:
-            try:
-                await dashboard.ping()
-            except:
-                pass
-
-        # Manda ping al ESP32 si está conectado
+            try: await dashboard.ping()
+            except: pass
         if esp32:
-            try:
-                await esp32.ping()
-            except:
-                pass
+            try: await esp32.ping()
+            except: pass
+
 
 # ── INICIO DEL SERVIDOR ──────────────────────────────────────────
 async def main():
-    # Render asigna el puerto automáticamente mediante la variable PORT
-    # En tu PC local usa el puerto 8765 por defecto
     puerto = int(os.environ.get("PORT", 8765))
-
     log.info(f"🚀 NÚCLEO Home servidor iniciando en puerto {puerto}")
 
-    # Iniciamos el ping periódico en paralelo con el servidor
     asyncio.create_task(ping_periodico())
 
-    # Iniciamos el servidor WebSocket
-    # "0.0.0.0" significa que acepta conexiones desde cualquier dirección
     async with websockets.serve(manejar_conexion, "0.0.0.0", puerto):
         log.info("✅ Servidor listo y esperando conexiones")
-        await asyncio.Future()   # Mantiene el servidor corriendo para siempre
+        await asyncio.Future()
 
-# ── PUNTO DE ENTRADA ─────────────────────────────────────────────
 if __name__ == "__main__":
     asyncio.run(main())
